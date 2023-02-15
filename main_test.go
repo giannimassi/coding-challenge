@@ -2,9 +2,12 @@ package main
 
 import (
 	"bufio"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -84,7 +87,7 @@ func Test_main(t *testing.T) {
 		{
 			name:    "Error while parsing urls file",
 			env:     "testdata/na.txt",
-			wantErr: "while parsing file: while opening file: open testdata/na.txt: no such file or directory",
+			wantErr: "while opening file: open testdata/na.txt: no such file or directory",
 		},
 	}
 	for _, tt := range tests {
@@ -140,4 +143,107 @@ func readLines(path string) ([]string, error) {
 		lines = append(lines, scanner.Text())
 	}
 	return lines, scanner.Err()
+}
+
+func Test_parseURLFile(t *testing.T) {
+	tests := []struct {
+		name     string
+		r        io.Reader
+		wantURLs []string
+		wantErr  string
+	}{
+		{
+			name: "OK",
+			r:    strings.NewReader("http://example.com\nhttp://httpstat.us/200\nhttp://httpstat.us/404\nhttp://httpstat.us/301\n"),
+			wantURLs: []string{
+				"http://example.com",
+				"http://httpstat.us/200",
+				"http://httpstat.us/404",
+				"http://httpstat.us/301",
+			},
+		},
+
+		{
+			name:     "OK empty",
+			r:        strings.NewReader(""),
+			wantURLs: []string{},
+		},
+
+		{
+			name: "OK empty lines",
+			r:    strings.NewReader("\n\n"),
+			wantURLs: []string{
+				"",
+				"",
+			},
+		},
+
+		{
+			name:    "io error",
+			r:       &errorReader{err: errors.New("io error")},
+			wantErr: "while reading file: io error",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseURLFile(tt.r)
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.ElementsMatch(t, tt.wantURLs, got)
+		})
+	}
+}
+
+// errorReader is a reader that always returns an error
+type errorReader struct {
+	err error
+}
+
+// Read always returns an error
+func (e errorReader) Read(p []byte) (n int, err error) {
+	return 0, e.err
+}
+
+func Test_processURLs(t *testing.T) {
+	// process the function return the url via the error for a check
+	processFn := func(url string) error {
+		return errors.New(url)
+	}
+	tests := []struct {
+		name string
+		urls []string
+		want []statusCodeCheckResult
+	}{
+		{
+			name: "OK",
+			urls: []string{
+				"http://example.com",
+				"http://httpstat.us/200",
+			},
+			want: []statusCodeCheckResult{
+				{
+					url: "http://example.com",
+					err: errors.New("http://example.com"),
+				},
+				{
+					url: "http://httpstat.us/200",
+					err: errors.New("http://httpstat.us/200"),
+				},
+			},
+		},
+		{
+			name: "OK no urls",
+			urls: []string{},
+			want: []statusCodeCheckResult{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := processURLs(tt.urls, processFn)
+			require.ElementsMatch(t, tt.want, got)
+		})
+	}
 }

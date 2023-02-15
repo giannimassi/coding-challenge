@@ -22,12 +22,18 @@ func run() error {
 		return fmt.Errorf("while loading environment: %w", err)
 	}
 
-	urls, err := parseURLFile(filePath)
+	// open file
+	f, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("while opening file: %w", err)
+	}
+
+	urls, err := parseURLFile(f)
 	if err != nil {
 		return fmt.Errorf("while parsing file: %w", err)
 	}
 
-	results := processURLs(urls)
+	results := processURLs(urls, checkResponseCode)
 
 	printResults(os.Stdout, results)
 
@@ -45,18 +51,13 @@ func loadEnv() (string, error) {
 
 // parseURLFile reads a file and returns a slice of urls.
 // The file read is expected to be a list of real-world http urls is separated by a newline (each url in a single line).
-func parseURLFile(filePath string) ([]string, error) {
-	// open file
-	f, err := os.Open(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("while opening file: %w", err)
-	}
-
+func parseURLFile(r io.Reader) ([]string, error) {
 	// Read each line into a slice of urls
 	var (
-		scanner = bufio.NewScanner(f)
+		scanner = bufio.NewScanner(r)
 		urls    = make([]string, 0)
 	)
+
 	for scanner.Scan() {
 		urls = append(urls, scanner.Text())
 	}
@@ -75,7 +76,7 @@ type statusCodeCheckResult struct {
 }
 
 // processURLs makes a http request to each url and returns a slice of statusCodeCheckResult.
-func processURLs(urls []string) []statusCodeCheckResult {
+func processURLs(urls []string, processFn func(string) error) []statusCodeCheckResult {
 	var (
 		resultsCh = make(chan statusCodeCheckResult, len(urls))
 		wg        = &sync.WaitGroup{}
@@ -90,7 +91,7 @@ func processURLs(urls []string) []statusCodeCheckResult {
 			defer wg.Done()
 			resultsCh <- statusCodeCheckResult{
 				url: url,
-				err: checkResponseCode(url),
+				err: processFn(url),
 			}
 		}()
 	}

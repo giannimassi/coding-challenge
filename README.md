@@ -15,7 +15,6 @@ The unit tests must cover at least the 99% of the code, a code coverage summary 
 - [] dockerize the solution
 - [x] provide a readme on how to test, build and deploy the solution
 
-
 ## Test
 
 ## Build and Deploy
@@ -45,6 +44,9 @@ env FILE_PATH=<path to the urls file> challenge
 The output will be a list of urls, each followed by the result of the check (OK only if the response code is 200).
 
 ## Comments
+
 Understanding who is the user of the application and what are the usecases is quite important in choosing the right interface to such program. In this case I made the least possible number of assumptions without overengineering this simple program, choosing to read the urls from a file passed via environment variable and print the output to stdout which is compatible with automated use (daemon) and command-line on-demand use (e.g. power user utility). An obvious improvement in case it used with automation is to make the output machine-readable.
 
-About the testing, I have chosen to implement a unit test for the `checkResponseCode` function and for the `main`function, providing two levels of testing, one for the most important function in the code base, the other one, to make sure the whole code path is tested. Given the simplicity of the task I didn't deem necessary to implement unit tests for all the functions individually, althought that would be preferred, providing more usefuleness that the current approach when it comes to maintaining the code.
+When it comes to testing I would love to know why the brief required a coverage of 99%, since I suspect it is either higher than needed or coming from some certification requirements. In my experience 99% coverage is not always a good goal to have from an engineer perspective, since having a very high coverage does not necessarily mean the code is well tested. The threshold that in my experience makes more sense for a very high quality software development team is 90%. What I prefer to focus on is what code is tested. As a code reviewer I need to make sure that the relevant edge cases are tested, not just the code path.
+
+In line with these thoughts I have decided to implement the unit tests that I felt were important to have.
