@@ -25,9 +25,24 @@ Build the program with:
 ```bash
 GOOS=darwin GOARCH=amd64 go build main.go -o ./challenge
 ```
+
 Remember to ustomize GOOS and GOARCH according to your requirements (see go docs for more details).
 
-The program is a command-line application that allows to check a list of urls provided as a list of lines in a file passed to the application via the environment variable
+The program is a command-line application that allows to check a list of urls provided as a list of lines in a file passed to the application via the environment variable.
+
+It can be run with:
+
+```bash
+env FILE_PATH=<path to the urls file> go run main.go
+```
+
+If you have already built the program you can also use the executable:
+
+```bash
+env FILE_PATH=<path to the urls file> challenge
+````
+
+The output will be a list of urls, each followed by the result of the check (OK only if the response code is 200).
 
 ## Comments
 Understanding who is the user of the application and what are the usecases is quite important in choosing the right interface to such program. In this case I made the least possible number of assumptions without overengineering this simple program, choosing to read the urls from a file passed via environment variable and print the output to stdout which is compatible with automated use (daemon) and command-line on-demand use (e.g. power user utility). An obvious improvement in case it used with automation is to make the output machine-readable.

@@ -69,7 +69,7 @@ func Test_main(t *testing.T) {
 		{
 			name: "OK",
 			env:  "testdata/urls.txt",
-			wantStdout: []string{`Results:`,
+			wantStdout: []string{
 				`URL: htp://example.com, Err: while making http request: Get "htp://example.com": unsupported protocol scheme "htp"`,
 				`URL: http://example.com, OK`,
 				`URL: http://httpstat.us/200, OK`,
@@ -82,8 +82,8 @@ func Test_main(t *testing.T) {
 			wantErr: "while loading environment: FILE_PATH environment variable is not set",
 		},
 		{
-			name:       "Error while parsing urls file",
-			env:        "testdata/na.txt",
+			name:    "Error while parsing urls file",
+			env:     "testdata/na.txt",
 			wantErr: "while parsing file: while opening file: open testdata/na.txt: no such file or directory",
 		},
 	}

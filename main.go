@@ -26,7 +26,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("while parsing file: %w", err)
 	}
-	
+
 	results := processURLs(urls)
 
 	printResults(os.Stdout, results)
@@ -129,7 +129,6 @@ func checkResponseCode(url string) error {
 // printResults prints the results to the given writer.
 // TODO: allow printing in machine-readable format (e.g. add env option to print in json format)
 func printResults(w io.Writer, results []statusCodeCheckResult) {
-	fmt.Fprintf(w, "Results:\n")
 	for _, r := range results {
 		if r.err != nil {
 			fmt.Fprintf(w, "URL: %s, Err: %s\n", r.url, r.err.Error())
